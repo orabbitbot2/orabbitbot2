@@ -262,6 +262,27 @@ function clampOptionalText(v, max) {
   return s ? s.slice(0, max) : null;
 }
 
+function normalizeWordList(value, fallback) {
+  const source =
+    typeof value === "string"
+      ? value
+      : typeof fallback === "string"
+        ? fallback
+        : "";
+  const seen = new Set();
+  return source
+    .split(/\r?\n/)
+    .map((word) => word.trim().slice(0, 64))
+    .filter((word) => {
+      const normalized = word.toLocaleLowerCase();
+      if (!normalized || seen.has(normalized)) return false;
+      seen.add(normalized);
+      return true;
+    })
+    .slice(0, 100)
+    .join("\n");
+}
+
 // Cor no formato #rrggbb; devolve o fallback se inválida.
 function normalizeColor(v, fallback) {
   const s = typeof v === "string" ? v.trim() : "";
@@ -299,11 +320,40 @@ function cleanFeatureValue(name, raw, sanitizeId) {
   };
 
   switch (name) {
+    case "autoModeration": {
+      const defaults = FEATURE_DEFAULTS.autoModeration;
+      return {
+        enabled:
+          src.enabled === undefined ? defaults.enabled : toBool(src.enabled),
+        maxWarnings: toInt(src.maxWarnings, defaults.maxWarnings, 1, 10),
+        muteDurationMinutes: toInt(
+          src.muteDurationMinutes,
+          defaults.muteDurationMinutes,
+          1,
+          1440,
+        ),
+        bannedWordsPt: normalizeWordList(
+          src.bannedWordsPt,
+          defaults.bannedWordsPt,
+        ),
+        bannedWordsEn: normalizeWordList(
+          src.bannedWordsEn,
+          defaults.bannedWordsEn,
+        ),
+      };
+    }
+
     case "antiSpam": {
       const defaults = FEATURE_DEFAULTS.antiSpam;
-      const rawSimilarity = Number(src.similarityThreshold);
+      const rawSimilarity =
+        src.similarityThreshold === null ||
+        src.similarityThreshold === undefined ||
+        src.similarityThreshold === ""
+          ? NaN
+          : Number(src.similarityThreshold);
       return {
-        enabled: toBool(src.enabled),
+        enabled:
+          src.enabled === undefined ? defaults.enabled : toBool(src.enabled),
         intervalSeconds: toInt(
           src.intervalSeconds,
           defaults.intervalSeconds,
@@ -333,12 +383,7 @@ function cleanFeatureValue(name, raw, sanitizeId) {
           1,
           3600,
         ),
-        strikesToMute: toInt(
-          src.strikesToMute,
-          defaults.strikesToMute,
-          1,
-          10,
-        ),
+        strikesToMute: toInt(src.strikesToMute, defaults.strikesToMute, 1, 10),
         minLength: toInt(src.minLength, defaults.minLength, 0, 100),
         similarityThreshold: Number.isFinite(rawSimilarity)
           ? Math.min(1, Math.max(0.5, rawSimilarity))
@@ -907,13 +952,34 @@ function registerFeaturesRoutes({
           return res.status(400).json({ ok: false, error: "GUILD_NOT_FOUND" });
 
         const cfg = await GuildConfig.findOne({ guildId }).lean();
-        const config = normalizeFeature(
+        let config = normalizeFeature(
           feature,
           cfg && cfg.features && cfg.features[feature],
         );
+        let testMessage;
+        if (feature === "autoModeration") {
+          if (
+            typeof req.body.testMessage !== "string" ||
+            !req.body.testMessage.trim()
+          ) {
+            return res
+              .status(400)
+              .json({ ok: false, error: "SIMULATION_MESSAGE_REQUIRED" });
+          }
+          testMessage = req.body.testMessage.trim().slice(0, 1000);
+          if (req.body.config && typeof req.body.config === "object") {
+            config = cleanFeatureValue(feature, req.body.config, sanitizeId);
+          }
+        }
 
         const { runFeatureTest } = require("../../systems/featureTests");
-        const result = await runFeatureTest({ client, guild, feature, config });
+        const result = await runFeatureTest({
+          client,
+          guild,
+          feature,
+          config,
+          testMessage,
+        });
         if (!result || result.ok === false) {
           return res.status(400).json({
             ok: false,

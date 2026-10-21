@@ -110,6 +110,48 @@
       ],
     },
     {
+      key: "autoModeration",
+      fields: [
+        {
+          type: "number",
+          name: "maxWarnings",
+          label: "features_automod_max_warnings",
+          min: 1,
+          max: 10,
+        },
+        {
+          type: "number",
+          name: "muteDurationMinutes",
+          label: "features_automod_mute_duration",
+          min: 1,
+          max: 1440,
+        },
+      ],
+      advancedFields: [
+        {
+          type: "textarea",
+          name: "bannedWordsPt",
+          label: "features_automod_words_pt",
+          placeholderKey: "features_automod_words_placeholder",
+          maxLength: 6000,
+        },
+        {
+          type: "textarea",
+          name: "bannedWordsEn",
+          label: "features_automod_words_en",
+          placeholderKey: "features_automod_words_placeholder",
+          maxLength: 6000,
+        },
+        {
+          type: "simulation",
+          name: "simulationMessage",
+          label: "features_automod_simulation_label",
+          placeholderKey: "features_automod_simulation_placeholder",
+          maxLength: 1000,
+        },
+      ],
+    },
+    {
       key: "antiSpam",
       fields: [
         {
@@ -792,6 +834,24 @@
       );
     }
 
+    if (field.type === "simulation") {
+      return (
+        '<div class="field field--full">' +
+        "<label>" +
+        esc(t(field.label)) +
+        "</label>" +
+        '<textarea class="input" rows="3" data-field="' +
+        esc(field.name) +
+        '"' +
+        (typeof field.maxLength === "number"
+          ? ' maxlength="' + field.maxLength + '"'
+          : "") +
+        (placeholder ? ' placeholder="' + esc(placeholder) + '"' : "") +
+        "></textarea>" +
+        "</div>"
+      );
+    }
+
     if (field.type === "bool") {
       var checked = value === true;
       return (
@@ -1164,7 +1224,9 @@
 
   function cardHtml(feature) {
     var isConfigured = configuredFeatures[feature.key] === true;
-    var isInherited = feature.key === "antiSpam" && !isConfigured;
+    var isInherited =
+      (feature.key === "antiSpam" || feature.key === "autoModeration") &&
+      !isConfigured;
     var v =
       isConfigured || isInherited
         ? current[feature.key] || {}
@@ -1254,11 +1316,12 @@
         ),
       ) +
       "</span>";
-    var setupHintHtml = isConfigured || isInherited
-      ? ""
-      : '<p class="hint" data-role="setup-hint">' +
-        esc(t("features_setup_hint")) +
-        "</p>";
+    var setupHintHtml =
+      isConfigured || isInherited
+        ? ""
+        : '<p class="hint" data-role="setup-hint">' +
+          esc(t("features_setup_hint")) +
+          "</p>";
 
     // Pré-visualização (boas-vindas/saída): espelha o embed enviado ao Discord.
     var previewHtml = feature.preview
@@ -1477,7 +1540,8 @@
     var state = card.querySelector('[data-role="config-state"]');
     var setupHint = card.querySelector('[data-role="setup-hint"]');
     var isConfigured = configuredFeatures[key] === true;
-    var isInherited = key === "antiSpam" && !isConfigured;
+    var isInherited =
+      (key === "antiSpam" || key === "autoModeration") && !isConfigured;
     var isDirty = card.getAttribute("data-dirty") === "true";
     if (state) {
       state.textContent = t(
@@ -1491,7 +1555,10 @@
       );
     }
     if (setupHint)
-      setupHint.classList.toggle("hidden", isConfigured || isInherited || isDirty);
+      setupHint.classList.toggle(
+        "hidden",
+        isConfigured || isInherited || isDirty,
+      );
   }
 
   function markCardDraft(card, preservePreset) {
@@ -1696,7 +1763,7 @@
     (feature.fields || [])
       .concat(feature.advancedFields || [])
       .forEach(function (f) {
-        if (f.type === "publish") return;
+        if (f.type === "publish" || f.type === "simulation") return;
 
         if (f.type === "entries") {
           out.entries = Array.prototype.slice
@@ -1721,7 +1788,8 @@
         if (f.type === "bool") {
           out[f.name] = !!el.checked;
         } else if (f.type === "number") {
-          var n = parseInt(el.value, 10);
+          var rawNumber = String(el.value || "").trim();
+          var n = rawNumber ? Number(rawNumber) : NaN;
           out[f.name] = Number.isFinite(n)
             ? n
             : prev[f.name] != null
@@ -1892,19 +1960,34 @@
     if (btn) btn.disabled = true;
 
     try {
-      var saved = await saveFeature(key, true);
-      if (!saved) throw new Error("SAVE_FAILED");
+      var testPayload = { guildId: gid };
+      if (key === "autoModeration") {
+        var sampleField =
+          card && card.querySelector('[data-field="simulationMessage"]');
+        var sampleMessage = sampleField
+          ? String(sampleField.value || "").trim()
+          : "";
+        if (!sampleMessage) {
+          notify(t("features_automod_simulation_required"), { type: "warn" });
+          return;
+        }
+        testPayload.testMessage = sampleMessage.slice(0, 1000);
+        testPayload.config = collect(key);
+      } else {
+        var saved = await saveFeature(key, true);
+        if (!saved) throw new Error("SAVE_FAILED");
+      }
       var res = await NS.apiPost(
         "/features/" + encodeURIComponent(key) + "/test",
-        { guildId: gid },
+        testPayload,
       );
       if (!res || res.ok === false)
         throw new Error((res && res.error) || "ERROR");
       var infoKey = res.info
         ? "features_test_info_" + res.info
         : "features_test_ok";
-      if (statusEl) statusEl.textContent = t(infoKey);
-      notify(t(infoKey), { type: "success" });
+      if (statusEl) statusEl.textContent = t(infoKey, res.data || {});
+      notify(t(infoKey, res.data || {}), { type: "success" });
     } catch (err) {
       console.error("Feature test error", err);
       if (statusEl) statusEl.textContent = "";

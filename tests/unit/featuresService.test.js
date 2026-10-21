@@ -69,3 +69,26 @@ test("antiSpam feature defaults are inherited instead of duplicated", () => {
     globalConfig.antiSpam.similarityThreshold,
   );
 });
+
+test("antiSpam partial overrides retain global booleans and threshold", () => {
+  const feature = normalizeFeature("antiSpam", {
+    maxMessages: 7,
+    enabled: null,
+    similarityThreshold: null,
+  });
+
+  eq(feature.enabled, globalConfig.antiSpam.enabled);
+  eq(feature.maxMessages, 7);
+  eq(feature.similarityThreshold, globalConfig.antiSpam.similarityThreshold);
+});
+
+test("autoModeration inherits global words and thresholds", () => {
+  const feature = normalizeFeature("autoModeration", null);
+  eq(feature.maxWarnings, globalConfig.maxWarnings);
+  eq(
+    feature.muteDurationMinutes,
+    Math.round(globalConfig.muteDuration / 60000),
+  );
+  eq(feature.bannedWordsPt, globalConfig.bannedWords.pt.join("\n"));
+  eq(feature.bannedWordsEn, globalConfig.bannedWords.en.join("\n"));
+});

@@ -50,7 +50,7 @@ function canAssignRole(me, guild, roleId) {
 /**
  * @returns {Promise<{ok:boolean, error?:string, info?:string, data?:object}>}
  */
-async function runFeatureTest({ client, guild, feature, config }) {
+async function runFeatureTest({ client, guild, feature, config, testMessage }) {
   const c = config || {};
 
   switch (feature) {
@@ -269,6 +269,43 @@ async function runFeatureTest({ client, guild, feature, config }) {
         info: "autoKick",
         data: { infractionsToKick: c.infractionsToKick },
       };
+
+    case "antiSpam":
+      // Sem mensagens ou punições de teste: valida e apresenta a configuração efetiva.
+      return {
+        ok: true,
+        info: "antiSpam",
+        data: {
+          enabled: c.enabled === true,
+          maxMessages: c.maxMessages,
+          intervalSeconds: c.intervalSeconds,
+          muteDurationMinutes: c.muteDurationMinutes,
+        },
+      };
+
+    case "autoModeration": {
+      if (typeof testMessage !== "string" || !testMessage.trim()) {
+        return { ok: false, error: "SIMULATION_MESSAGE_REQUIRED" };
+      }
+      if (c.enabled === false) {
+        return {
+          ok: true,
+          info: "autoModerationDisabled",
+          data: { word: null },
+        };
+      }
+      const { evaluateAutoModeration } = require("./autoModeration");
+      const { matchedWord } = evaluateAutoModeration(testMessage, c, guild.id);
+      return {
+        ok: true,
+        info: matchedWord ? "autoModerationMatched" : "autoModerationNoMatch",
+        data: {
+          word: matchedWord,
+          maxWarnings: c.maxWarnings,
+          muteDurationMinutes: c.muteDurationMinutes,
+        },
+      };
+    }
 
     case "polls":
       // As enquetes são criadas por slash command no servidor.

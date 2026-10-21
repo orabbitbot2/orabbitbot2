@@ -1,6 +1,5 @@
 // src/events/messageCreate.js
 
-const config = require("../config/defaultConfig");
 const autoModeration = require("../systems/autoModeration");
 const antiSpam = require("../systems/antiSpam");
 
@@ -60,13 +59,9 @@ module.exports = (client) => {
 
       // A partir daqui: apenas moderação automática (AutoMod + AntiSpam).
       // Toda a moderação manual é feita via comandos slash (/warn, /mute, ...).
-      if (config?.autoModeration?.enabled !== false) {
-        await autoModeration(message, client);
-      }
+      await autoModeration(message, client);
 
-      if (config?.antiSpam?.enabled !== false) {
-        await antiSpam(message, client);
-      }
+      await antiSpam(message, client);
 
       // Sistema de níveis (XP) — feature opcional "levels".
       if (levels && typeof levels.awardXp === "function") {

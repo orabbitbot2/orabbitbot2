@@ -965,6 +965,26 @@ window.OzarkLocales.pt = {
   feature_auto_kick_name: "Auto-kick por infrações",
   feature_auto_kick_desc:
     "Expulsa automaticamente membros que atingem o número de infrações definido.",
+  feature_auto_moderation_name: "AutoMod",
+  feature_auto_moderation_desc:
+    "Deteta palavras configuradas e aplica WARN/timeout segundo as regras deste servidor.",
+  features_automod_max_warnings: "Avisos antes do timeout",
+  features_automod_mute_duration: "Timeout (minutos)",
+  features_automod_words_pt: "Palavras proibidas (PT)",
+  features_automod_words_en: "Palavras proibidas (EN)",
+  features_automod_words_placeholder:
+    "Uma palavra ou expressão por linha (máx. 100)",
+  features_automod_simulation_label: "Mensagem de simulação",
+  features_automod_simulation_placeholder:
+    "Escreve uma mensagem para verificar se alguma regra corresponde",
+  features_automod_simulation_required:
+    "Escreve uma mensagem de exemplo para simular.",
+  features_test_info_autoModerationMatched:
+    "A mensagem corresponderia à regra “{word}”. Sem punições aplicadas.",
+  features_test_info_autoModerationNoMatch:
+    "Nenhuma regra correspondeu. Sem mensagens ou punições enviadas.",
+  features_test_info_autoModerationDisabled:
+    "AutoMod está desligado neste rascunho; nenhuma ação seria aplicada.",
   feature_anti_spam_name: "Anti-spam",
   feature_anti_spam_desc:
     "Deteta mensagens repetidas e aplica avisos ou timeout segundo os limites deste servidor.",
@@ -980,6 +1000,8 @@ window.OzarkLocales.pt = {
   features_antispam_ignore_attachments: "Ignorar mensagens só com anexos",
   features_antispam_bypass_admins: "Ignorar Administradores",
   features_antispam_send_message: "Publicar aviso no canal",
+  features_test_info_antiSpam:
+    "Configuração Anti-spam validada. Nenhuma mensagem ou punição foi enviada.",
   feature_levels_name: "Níveis e XP",
   feature_levels_desc:
     "Dá XP por mensagem e permite consultar o ranking com /rank e /leaderboard.",

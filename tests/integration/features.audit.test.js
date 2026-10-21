@@ -78,7 +78,9 @@ test("feature loading distinguishes saved features from normalized defaults", as
     assert.equal(result.features.welcome.enabled, false);
     assert.equal(
       result.features.antiSpam.intervalSeconds,
-      Math.round(require("../../src/config/defaultConfig").antiSpam.interval / 1000),
+      Math.round(
+        require("../../src/config/defaultConfig").antiSpam.interval / 1000,
+      ),
     );
   } finally {
     await stopApp(app.server);
@@ -137,6 +139,96 @@ test("antiSpam feature updates are clamped and saved per server", async () => {
     });
     assert.equal(update.filter.guildId, "123456789012345678");
     assert.deepEqual(update.value.$addToSet.featuresConfigured, "antiSpam");
+  } finally {
+    await stopApp(app.server);
+  }
+});
+
+test("AutoMod simulation uses the unsaved draft without persisting it", async () => {
+  const guildId = "123456789012345678";
+  let writes = 0;
+  const app = await startApp(registerFeaturesRoutes, {
+    requireDashboardAuth: passthrough,
+    requirePerm: () => passthrough,
+    requireGuildAccess: () => passthrough,
+    sanitizeId,
+    GuildConfig: {
+      findOne: () => ({ lean: async () => ({ guildId, features: {} }) }),
+      findOneAndUpdate: async () => {
+        writes++;
+      },
+    },
+    getClient: () => ({ guilds: { fetch: async () => ({ id: guildId }) } }),
+  });
+
+  try {
+    const response = await fetch(
+      app.baseUrl + "/api/features/autoModeration/test",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          guildId,
+          testMessage: "This sample contains a testphrase.",
+          config: {
+            enabled: true,
+            maxWarnings: 4,
+            muteDurationMinutes: 12,
+            bannedWordsEn: "testphrase",
+            bannedWordsPt: "",
+          },
+        }),
+      },
+    );
+    assert.equal(response.status, 200);
+    const result = await response.json();
+    assert.equal(result.info, "autoModerationMatched");
+    assert.equal(result.data.word, "testphrase");
+    assert.equal(writes, 0);
+  } finally {
+    await stopApp(app.server);
+  }
+});
+
+test("AutoMod rules are deduplicated and bounded before persistence", async () => {
+  let update;
+  const app = await startApp(registerFeaturesRoutes, {
+    requireDashboardAuth: passthrough,
+    requirePerm: () => passthrough,
+    requireGuildAccess: () => passthrough,
+    sanitizeId,
+    GuildConfig: {
+      findOneAndUpdate(filter, value) {
+        update = { filter, value };
+        return { lean: async () => ({}) };
+      },
+    },
+    getClient: () => null,
+  });
+
+  try {
+    const response = await fetch(app.baseUrl + "/api/features", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        guildId: "123456789012345678",
+        feature: "autoModeration",
+        value: {
+          enabled: true,
+          maxWarnings: 99,
+          muteDurationMinutes: 0,
+          bannedWordsPt: "Termo\ntermo\n" + "x".repeat(80),
+          bannedWordsEn: "word",
+        },
+      }),
+    });
+    assert.equal(response.status, 200);
+    const { value } = await response.json();
+    assert.equal(value.maxWarnings, 10);
+    assert.equal(value.muteDurationMinutes, 1);
+    assert.equal(value.bannedWordsPt, `Termo\n${"x".repeat(64)}`);
+    assert.equal(value.bannedWordsEn, "word");
+    assert.equal(update.value.$addToSet.featuresConfigured, "autoModeration");
   } finally {
     await stopApp(app.server);
   }

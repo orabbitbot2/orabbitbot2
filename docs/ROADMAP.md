@@ -58,6 +58,8 @@ Não é um compromisso rígido, mas um guia de prioridades.
 - Ajustar automaticamente a agressividade da automoderação em função do Trust médio do servidor ✅ – **opt-in** (`trust.adaptive`, desligado por defeito):
   - Regra definida: média de Trust do servidor ≤ `lowThreshold` ⇒ automoderação mais rígida (`strictDelta`, −1 warn); ≥ `highThreshold` ⇒ mais tolerante (`lenientDelta`, +1 warn); entre os dois, neutro. Amostras abaixo de `minSampleSize` (5) nunca ajustam, para não reagir a servidores com poucos dados.
   - Helpers puros `getAdaptiveAutomodAdjustment`/`getAdaptiveMaxWarnings` em `src/utils/trust.js`; agregado memoizado (TTL 5 min) em `warningsService.getGuildAverageTrust`; aplicado em `src/systems/autoModeration.js` sobre o limite já ajustado pelo Trust do utilizador (com piso de 1 warn).
+- Configuração e simulação AutoMod por servidor: ✅ – listas PT/EN, limiar de avisos e duração de timeout herdam defaults globais ou podem ser substituídos por guild; a simulação usa o rascunho sem persistir ou executar ações.
+- Anti-spam por servidor: ✅ – limites, strikes, duração/cooldown e exceções são configuráveis na feature `antiSpam`; a configuração não guardada herda `config.antiSpam`.
 
 ## 4. GameNews
 

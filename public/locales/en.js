@@ -947,6 +947,24 @@ window.OzarkLocales.en = {
   feature_auto_kick_name: "Auto-kick on infractions",
   feature_auto_kick_desc:
     "Automatically kicks members that reach the configured infraction count.",
+  feature_auto_moderation_name: "AutoMod",
+  feature_auto_moderation_desc:
+    "Detects configured words and applies WARN/timeout according to this server's rules.",
+  features_automod_max_warnings: "Warnings before timeout",
+  features_automod_mute_duration: "Timeout (minutes)",
+  features_automod_words_pt: "Banned words (PT)",
+  features_automod_words_en: "Banned words (EN)",
+  features_automod_words_placeholder: "One word or phrase per line (up to 100)",
+  features_automod_simulation_label: "Simulation message",
+  features_automod_simulation_placeholder:
+    "Type a message to check whether any rule matches",
+  features_automod_simulation_required: "Enter a sample message to simulate.",
+  features_test_info_autoModerationMatched:
+    "This message would match “{word}”. No punishment was applied.",
+  features_test_info_autoModerationNoMatch:
+    "No rule matched. No messages or punishments were sent.",
+  features_test_info_autoModerationDisabled:
+    "AutoMod is disabled in this draft; no action would be taken.",
   feature_anti_spam_name: "Anti-spam",
   feature_anti_spam_desc:
     "Detects repeated messages and applies warnings or timeouts using this server's thresholds.",
@@ -962,6 +980,8 @@ window.OzarkLocales.en = {
   features_antispam_ignore_attachments: "Ignore attachment-only messages",
   features_antispam_bypass_admins: "Ignore administrators",
   features_antispam_send_message: "Post a channel notice",
+  features_test_info_antiSpam:
+    "Anti-spam settings validated. No messages or punishments were sent.",
   feature_levels_name: "Levels & XP",
   feature_levels_desc:
     "Grants XP per message and exposes ranking via /rank and /leaderboard.",

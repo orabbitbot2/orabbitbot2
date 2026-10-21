@@ -9,9 +9,28 @@ const defaultConfig = require("../config/defaultConfig");
 
 const globalAntiSpam = defaultConfig.antiSpam || {};
 const globalAntiSpamSoft = globalAntiSpam.softActions || {};
+const globalAutoModeration = defaultConfig.autoModeration || {};
+const globalBannedWords = defaultConfig.bannedWords || {};
+const autoModerationFeatureDefaults = {
+  enabled: globalAutoModeration.enabled !== false,
+  maxWarnings: defaultConfig.maxWarnings || 3,
+  muteDurationMinutes: Math.max(
+    1,
+    Math.round((defaultConfig.muteDuration || 10 * 60 * 1000) / 60000),
+  ),
+  bannedWordsPt: Array.isArray(globalBannedWords.pt)
+    ? globalBannedWords.pt.join("\n")
+    : "",
+  bannedWordsEn: Array.isArray(globalBannedWords.en)
+    ? globalBannedWords.en.join("\n")
+    : "",
+};
 const antiSpamFeatureDefaults = {
   enabled: globalAntiSpam.enabled !== false,
-  intervalSeconds: Math.max(1, Math.round((globalAntiSpam.interval || 10000) / 1000)),
+  intervalSeconds: Math.max(
+    1,
+    Math.round((globalAntiSpam.interval || 10000) / 1000),
+  ),
   maxMessages: globalAntiSpam.maxMessages || 5,
   muteDurationMinutes: Math.max(
     1,
@@ -35,6 +54,7 @@ const antiSpamFeatureDefaults = {
 };
 
 const FEATURE_DEFAULTS = {
+  autoModeration: autoModerationFeatureDefaults,
   antiSpam: antiSpamFeatureDefaults,
   messageLogs: { enabled: false, channelId: null, ignoreBots: true },
   reactionRoles: {

@@ -1,11 +1,11 @@
 // src/systems/autoModeration.js
 
 const { PermissionsBitField } = require("discord.js");
-const config = require("../config/defaultConfig");
 
 const logger = require("./logger");
 const warningsService = require("./warningsService");
 const infractionsService = require("./infractionsService");
+const { getFeature } = require("./featuresService");
 const { t, tContext } = require("./i18n");
 const {
   getGuildTrustConfig,
@@ -15,21 +15,64 @@ const {
 } = require("../utils/trust");
 const { incrementAutoModActions } = require("./status");
 
-// Precompile banned-word regexes once at startup.
-// Creating RegExp objects per message is expensive and scales poorly.
+const matcherCache = new Map();
+
+function wordLines(value) {
+  const values = Array.isArray(value)
+    ? value
+    : typeof value === "string"
+      ? value.split(/\r?\n/)
+      : [];
+  return values.map((word) => String(word || "").trim()).filter(Boolean);
+}
+
+function normalizeAutoModerationConfig(globalConfig, featureConfig) {
+  const global = globalConfig || {};
+  const feature = featureConfig || {};
+  return {
+    enabled: feature.enabled === true,
+    maxWarnings: Number(feature.maxWarnings) || Number(global.maxWarnings) || 3,
+    muteDuration:
+      (Number(feature.muteDurationMinutes) ||
+        Math.max(
+          1,
+          Math.round((Number(global.muteDuration) || 600_000) / 60_000),
+        )) * 60_000,
+    bannedWords: {
+      pt: wordLines(feature.bannedWordsPt),
+      en: wordLines(feature.bannedWordsEn),
+    },
+  };
+}
+
+function normalizeMatchText(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/https?:\/\/\S+/gi, "")
+    .replace(/<:[a-zA-Z0-9_]+:[0-9]+>/g, "")
+    .replace(/[^\w\s]/g, " ")
+    .toLowerCase();
+}
+
 function buildBannedWordMatchers(cfg) {
-  const words = [
-    ...((cfg.bannedWords && cfg.bannedWords.pt) || []),
-    ...((cfg.bannedWords && cfg.bannedWords.en) || []),
-  ].filter(Boolean);
+  const bannedWords =
+    cfg && cfg.bannedWords
+      ? cfg.bannedWords
+      : {
+          pt: cfg && cfg.bannedWordsPt,
+          en: cfg && cfg.bannedWordsEn,
+        };
+  const words = [...wordLines(bannedWords.pt), ...wordLines(bannedWords.en)];
 
   const out = [];
   for (const w of words) {
-    const raw = String(w).trim();
+    const raw = normalizeMatchText(w).trim();
     if (!raw) continue;
 
-    // Allow common leetspeak substitutions.
-    const pattern = raw
+    const escaped = raw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    // Allow common leetspeak substitutions on literal user-provided words.
+    const pattern = escaped
       .replace(/a/gi, "[a4@]")
       .replace(/e/gi, "[e3]")
       .replace(/i/gi, "[i1!]")
@@ -46,7 +89,33 @@ function buildBannedWordMatchers(cfg) {
   return out;
 }
 
-const BANNED_MATCHERS = buildBannedWordMatchers(config);
+function getBannedWordMatchers(guildId, cfg) {
+  const key = String(guildId || "default");
+  const wordsConfig =
+    cfg && cfg.bannedWords
+      ? cfg.bannedWords
+      : { pt: cfg && cfg.bannedWordsPt, en: cfg && cfg.bannedWordsEn };
+  const signature = JSON.stringify(wordsConfig);
+  const cached = matcherCache.get(key);
+  if (cached && cached.signature === signature) return cached.matchers;
+
+  const matchers = buildBannedWordMatchers(cfg);
+  matcherCache.set(key, { signature, matchers });
+  if (matcherCache.size > 1000) {
+    matcherCache.delete(matcherCache.keys().next().value);
+  }
+  return matchers;
+}
+
+function evaluateAutoModeration(content, cfg, guildId) {
+  const cleanContent = normalizeMatchText(content);
+  for (const matcher of getBannedWordMatchers(guildId, cfg)) {
+    if (matcher.re.test(cleanContent)) {
+      return { matchedWord: matcher.word };
+    }
+  }
+  return { matchedWord: null };
+}
 
 // DM helper is shared in src/utils/dm.js
 
@@ -90,6 +159,14 @@ module.exports = async function autoModeration(message, client) {
     const guild = message.guild;
     const botMember = guild.members.me;
     if (!botMember) return;
+    const featureConfig = await getFeature(guild.id, "autoModeration").catch(
+      () => null,
+    );
+    const autoConfig = normalizeAutoModerationConfig(
+      require("../config/defaultConfig"),
+      featureConfig,
+    );
+    if (!autoConfig.enabled) return;
     const lang = await require("./i18n").getGuildLang(guild.id);
 
     const trustCfg = await getGuildTrustConfig(guild.id);
@@ -106,26 +183,13 @@ module.exports = async function autoModeration(message, client) {
       return;
     }
 
-    const baseMaxWarnings = config.maxWarnings ?? 3;
-    const baseMuteDuration = config.muteDuration ?? 10 * 60 * 1000;
-
-    const cleanContent = message.content
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/https?:\/\/\S+/gi, "")
-      .replace(/<:[a-zA-Z0-9_]+:[0-9]+>/g, "")
-      .replace(/[^\w\s]/g, "")
-      .toLowerCase();
-
-    let foundWord = null;
-    for (const m of BANNED_MATCHERS) {
-      if (!m?.re) continue;
-      if (m.re.test(cleanContent)) {
-        foundWord = m.word;
-        break;
-      }
-    }
-
+    const baseMaxWarnings = autoConfig.maxWarnings;
+    const baseMuteDuration = autoConfig.muteDuration;
+    const { matchedWord: foundWord } = evaluateAutoModeration(
+      message.content,
+      autoConfig,
+      guild.id,
+    );
     if (!foundWord) return;
 
     const perms = message.channel.permissionsFor(botMember);
@@ -308,3 +372,7 @@ module.exports = async function autoModeration(message, client) {
     console.error("[AutoMod] Critical error:", err);
   }
 };
+
+module.exports.buildBannedWordMatchers = buildBannedWordMatchers;
+module.exports.normalizeAutoModerationConfig = normalizeAutoModerationConfig;
+module.exports.evaluateAutoModeration = evaluateAutoModeration;
