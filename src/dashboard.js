@@ -35,6 +35,8 @@ const {
 const {
   GuildConfigSchema,
   ModWarnSchema,
+  ModBanSchema,
+  ModUnbanSchema,
   ModMuteSchema,
   ModUnmuteSchema,
   LogsQuerySchema,
@@ -338,6 +340,8 @@ registerDashboardRoutes({
   PremiumSettings,
   GuildConfigSchema,
   ModWarnSchema,
+  ModBanSchema,
+  ModUnbanSchema,
   ModMuteSchema,
   ModUnmuteSchema,
   LogsQuerySchema,

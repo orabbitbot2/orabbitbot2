@@ -110,6 +110,90 @@
       ],
     },
     {
+      key: "antiSpam",
+      fields: [
+        {
+          type: "number",
+          name: "maxMessages",
+          label: "features_antispam_max_messages",
+          min: 2,
+          max: 30,
+        },
+        {
+          type: "number",
+          name: "intervalSeconds",
+          label: "features_antispam_interval",
+          min: 1,
+          max: 120,
+        },
+        {
+          type: "number",
+          name: "muteDurationMinutes",
+          label: "features_antispam_mute_duration",
+          min: 1,
+          max: 1440,
+        },
+      ],
+      advancedFields: [
+        {
+          type: "bool",
+          name: "softActionsEnabled",
+          label: "features_antispam_soft_actions",
+        },
+        {
+          type: "number",
+          name: "strikesToMute",
+          label: "features_antispam_strikes",
+          min: 1,
+          max: 10,
+        },
+        {
+          type: "number",
+          name: "strikeWindowSeconds",
+          label: "features_antispam_strike_window",
+          min: 1,
+          max: 3600,
+        },
+        {
+          type: "number",
+          name: "actionCooldownSeconds",
+          label: "features_antispam_cooldown",
+          min: 0,
+          max: 3600,
+        },
+        {
+          type: "number",
+          name: "minLength",
+          label: "features_antispam_min_length",
+          min: 0,
+          max: 100,
+        },
+        {
+          type: "number",
+          name: "similarityThreshold",
+          label: "features_antispam_similarity",
+          min: 0.5,
+          max: 1,
+          step: 0.05,
+        },
+        {
+          type: "bool",
+          name: "ignoreAttachments",
+          label: "features_antispam_ignore_attachments",
+        },
+        {
+          type: "bool",
+          name: "bypassAdmins",
+          label: "features_antispam_bypass_admins",
+        },
+        {
+          type: "bool",
+          name: "sendMessage",
+          label: "features_antispam_send_message",
+        },
+      ],
+    },
+    {
       key: "levels",
       fields: [
         {
@@ -1080,7 +1164,11 @@
 
   function cardHtml(feature) {
     var isConfigured = configuredFeatures[feature.key] === true;
-    var v = isConfigured ? current[feature.key] || {} : { enabled: false };
+    var isInherited = feature.key === "antiSpam" && !isConfigured;
+    var v =
+      isConfigured || isInherited
+        ? current[feature.key] || {}
+        : { enabled: false };
     var enabled = v.enabled === true;
     var premiumModule = feature.premiumModule
       ? String(feature.premiumModule)
@@ -1156,9 +1244,17 @@
 
     var configStateHtml =
       '<span class="feature-card__config-state" data-role="config-state">' +
-      esc(t(isConfigured ? "features_configured" : "features_not_configured")) +
+      esc(
+        t(
+          isConfigured
+            ? "features_configured"
+            : isInherited
+              ? "features_inherited"
+              : "features_not_configured",
+        ),
+      ) +
       "</span>";
-    var setupHintHtml = isConfigured
+    var setupHintHtml = isConfigured || isInherited
       ? ""
       : '<p class="hint" data-role="setup-hint">' +
         esc(t("features_setup_hint")) +
@@ -1381,6 +1477,7 @@
     var state = card.querySelector('[data-role="config-state"]');
     var setupHint = card.querySelector('[data-role="setup-hint"]');
     var isConfigured = configuredFeatures[key] === true;
+    var isInherited = key === "antiSpam" && !isConfigured;
     var isDirty = card.getAttribute("data-dirty") === "true";
     if (state) {
       state.textContent = t(
@@ -1388,11 +1485,13 @@
           ? "features_unsaved"
           : isConfigured
             ? "features_configured"
-            : "features_not_configured",
+            : isInherited
+              ? "features_inherited"
+              : "features_not_configured",
       );
     }
     if (setupHint)
-      setupHint.classList.toggle("hidden", isConfigured || isDirty);
+      setupHint.classList.toggle("hidden", isConfigured || isInherited || isDirty);
   }
 
   function markCardDraft(card, preservePreset) {

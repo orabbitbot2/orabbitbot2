@@ -26,6 +26,7 @@ Esta nota resume a arquitetura atual do bot, para facilitar manutenção e evolu
     - `maintenance.js` – tarefas periódicas (limpeza de logs/infrações antigos, etc.).
     - `gamenews.js` – ciclo de RSS → mensagens no Discord + estado para a dashboard.
     - `logger.js` – registo de ações de moderação (Warn/Mute/Kick/Ban, etc.) em Mongo e na cache de logs da dashboard.
+    - `temporaryBans.js` – expiração persistente de bans temporários, com validação de marcador e retry após falhas transitórias.
     - outros ficheiros utilitários.
 
 - `public/`

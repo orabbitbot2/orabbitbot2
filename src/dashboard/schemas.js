@@ -50,6 +50,12 @@ const ModWarnSchema = z.object({
   reason: z.string().max(1000).optional(),
 });
 
+const ModBanSchema = ModWarnSchema.extend({
+  duration: z.string().trim().max(32).optional(),
+});
+
+const ModUnbanSchema = ModWarnSchema;
+
 const ModUnmuteSchema = z.object({
   guildId: z.string().min(1).max(32),
   userId: z.string().min(1).max(32),
@@ -126,6 +132,8 @@ module.exports = {
   GuildConfigSchema,
   ModMuteSchema,
   ModWarnSchema,
+  ModBanSchema,
+  ModUnbanSchema,
   ModUnmuteSchema,
   LogsQuerySchema,
   GameNewsFeedSchema,

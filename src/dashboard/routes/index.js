@@ -23,7 +23,11 @@ const { registerAdminRoutes } = require("./admin");
 const { registerTempVoiceRoutes } = require("./tempVoice");
 const { registerFeaturesRoutes } = require("./features");
 const { registerPremiumRoutes, createPremiumGuard } = require("./premium");
-const { resolveGuildMember } = require("../../services/moderationService");
+const {
+  executeMemberAction,
+  executeUnbanAction,
+  resolveGuildMember,
+} = require("../../services/moderationService");
 
 function registerDashboardRoutes(ctx) {
   const {
@@ -77,6 +81,8 @@ function registerDashboardRoutes(ctx) {
     // Schemas Zod (ver dashboard/schemas.js)
     GuildConfigSchema,
     ModWarnSchema,
+    ModBanSchema,
+    ModUnbanSchema,
     ModMuteSchema,
     ModUnmuteSchema,
     LogsQuerySchema,
@@ -217,12 +223,16 @@ function registerDashboardRoutes(ctx) {
     getActorFromRequest,
     recordAudit,
     ModWarnSchema,
+    ModBanSchema,
+    ModUnbanSchema,
     ModMuteSchema,
     ModUnmuteSchema,
     parseDuration,
     formatDuration,
     config,
     dashboardWarn,
+    executeMemberAction,
+    executeUnbanAction,
     resolveGuildMember,
     ModError,
     mongoose,

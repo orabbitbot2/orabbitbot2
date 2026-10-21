@@ -69,6 +69,27 @@ module.exports = {
         "❌ Failed to unmute the user. Check my permissions and role hierarchy.",
     },
 
+    memberAction: {
+      cannotSelf: "❌ You cannot moderate yourself.",
+      cannotAdmin:
+        "❌ Only an Administrator can moderate another Administrator.",
+      roleHierarchyUser:
+        "❌ You cannot moderate a user with an equal or higher role than yours.",
+      roleHierarchyBot:
+        "❌ The bot cannot moderate this user because of role hierarchy.",
+      invalidDuration: "❌ Duration must be between 1 minute and 365 days.",
+      invalidUserId: "❌ Enter a valid Discord user ID.",
+      notBanned: "⚠️ This user is not currently banned.",
+      kicked: ({ tag, caseId }) =>
+        `👢 **${tag}** was kicked.${caseId ? ` Case: **#${caseId}**` : ""}`,
+      banned: ({ tag, caseId, duration }) =>
+        `🔨 **${tag}** was banned${duration ? ` for ${duration}` : ""}.${caseId ? ` Case: **#${caseId}**` : ""}`,
+      unbanned: ({ tag, caseId }) =>
+        `✅ **${tag}** was unbanned.${caseId ? ` Case: **#${caseId}**` : ""}`,
+      failed:
+        "❌ The action failed. Check the bot's permissions and role hierarchy.",
+    },
+
     clear: {
       noPerm: "❌ I do not have permission to manage messages in this channel.",
       tooOldOrNoPerm:
@@ -86,6 +107,9 @@ module.exports = {
         `• \`${prefix}warn @user [reason]\` – issue a warning to a user`,
         `• \`${prefix}mute @user [10m/1h/2d] [reason]\` – timeout (mute) a user`,
         `• \`${prefix}unmute @user\` – remove timeout from a user`,
+        "• `/kick @user [reason]` – remove a member from the server",
+        "• `/ban @user [reason] [duration]` – ban permanently or for a limited time",
+        "• `/unban <user_id> [reason]` – remove a server ban",
         `• \`${prefix}clear <amount>\` – clear messages in the current channel`,
         `• \`${prefix}userinfo [@user]\` – show info about a user (staff sees trust/infractions)`,
       ],
@@ -381,6 +405,26 @@ Warnings: **${warnings}/${maxWarnings}**`,
         "❌ Falha ao remover silêncio. Verifica permissões e hierarquia de cargos.",
     },
 
+    memberAction: {
+      cannotSelf: "❌ Não podes moderar-te a ti próprio.",
+      cannotAdmin: "❌ Só um Administrador pode moderar outro Administrador.",
+      roleHierarchyUser:
+        "❌ Não podes moderar um utilizador com cargo igual ou superior ao teu.",
+      roleHierarchyBot:
+        "❌ O bot não pode moderar este utilizador devido à hierarquia de cargos.",
+      invalidDuration: "❌ A duração tem de ser entre 1 minuto e 365 dias.",
+      invalidUserId: "❌ Indica um ID de utilizador Discord válido.",
+      notBanned: "⚠️ Este utilizador não está banido.",
+      kicked: ({ tag, caseId }) =>
+        `👢 **${tag}** foi expulso.${caseId ? ` Caso: **#${caseId}**` : ""}`,
+      banned: ({ tag, caseId, duration }) =>
+        `🔨 **${tag}** foi banido${duration ? ` por ${duration}` : ""}.${caseId ? ` Caso: **#${caseId}**` : ""}`,
+      unbanned: ({ tag, caseId }) =>
+        `✅ **${tag}** foi desbanido.${caseId ? ` Caso: **#${caseId}**` : ""}`,
+      failed:
+        "❌ A ação falhou. Verifica as permissões do bot e a hierarquia de cargos.",
+    },
+
     clear: {
       noPerm: "❌ Não tenho permissão para gerir mensagens neste canal.",
       tooOldOrNoPerm:
@@ -398,6 +442,9 @@ Warnings: **${warnings}/${maxWarnings}**`,
         `• \`${prefix}warn @user [motivo]\` – aplicar um aviso a um utilizador`,
         `• \`${prefix}mute @user [10m/1h/2d] [motivo]\` – silenciar (timeout) um utilizador`,
         `• \`${prefix}unmute @user\` – remover silêncio de um utilizador`,
+        "• `/kick @user [motivo]` – expulsar um membro do servidor",
+        "• `/ban @user [motivo] [duração]` – banir permanentemente ou por tempo limitado",
+        "• `/unban <user_id> [motivo]` – remover um ban do servidor",
         `• \`${prefix}clear <quantidade>\` – apagar mensagens no canal atual`,
         `• \`${prefix}userinfo [@user]\` – ver info de um utilizador (staff vê trust/infrações)`,
       ],

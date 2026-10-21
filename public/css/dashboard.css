@@ -647,6 +647,59 @@ h2 {
   flex: 0 0 auto;
 }
 
+.overview-inventory-tools {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin: var(--sp-3) 0;
+}
+
+.overview-inventory-filters {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  background: var(--tabs-bg);
+}
+
+.overview-inventory-filter {
+  min-height: var(--control-h-sm);
+  padding: 0 var(--sp-3);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: var(--fs-xs);
+  cursor: pointer;
+}
+
+.overview-inventory-filter.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: var(--fw-semibold);
+}
+
+.overview-inventory-tools > .hint {
+  margin: 0;
+  text-align: right;
+}
+
+.management-section-head {
+  margin: var(--sp-4) 0 var(--sp-2);
+  padding-top: var(--sp-3);
+}
+
+.management-section-head h3 {
+  margin: 0;
+}
+
+.management-section-head .hint {
+  margin: var(--sp-1) 0 0;
+}
+
 @media (max-width: 768px) {
   .overview-kpis--server {
     grid-template-columns: 1fr;
@@ -658,6 +711,24 @@ h2 {
 
   #overviewGlobalInventory .feature-search {
     width: 100%;
+  }
+
+  .overview-inventory-tools {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .overview-inventory-filters {
+    width: 100%;
+  }
+
+  .overview-inventory-filter {
+    flex: 1;
+    padding-inline: var(--sp-2);
+  }
+
+  .overview-inventory-tools > .hint {
+    text-align: left;
   }
 }
 
@@ -1066,6 +1137,11 @@ h2 {
 
 .user-detail .user-actions-buttons {
   margin-top: 4px;
+}
+
+.user-detail .user-actions-buttons .btn-ban {
+  border-color: var(--danger);
+  color: var(--danger);
 }
 
 /* Trust summary in user detail panel */

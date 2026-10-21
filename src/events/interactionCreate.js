@@ -11,6 +11,8 @@ const { safeReply } = require("../utils/discord");
 
 const warnSlash = require("../slash/warn");
 const muteSlash = require("../slash/mute");
+const memberActionSlash = require("../slash/memberAction");
+const unbanSlash = require("../slash/unban");
 const unmuteSlash = require("../slash/unmute");
 const clearSlash = require("../slash/clear");
 const userinfoSlash = require("../slash/userinfo");
@@ -36,6 +38,9 @@ try {
 const commandHandlers = new Map([
   ["warn", warnSlash],
   ["mute", muteSlash],
+  ["kick", memberActionSlash("KICK")],
+  ["ban", memberActionSlash("BAN")],
+  ["unban", unbanSlash],
   ["unmute", unmuteSlash],
   ["clear", clearSlash],
   ["userinfo", userinfoSlash],

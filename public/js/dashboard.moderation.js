@@ -7,6 +7,7 @@
   const D = window.OzarkDashboard;
   const state = D.state;
   const apiGet = D.apiGet;
+  const apiPost = D.apiPost;
   const toast = D.toast;
   const t = D.t;
   const escapeHtml = D.escapeHtml;
@@ -588,6 +589,52 @@
   }
 
   document.addEventListener("DOMContentLoaded", function () {
+    const unbanForm = document.getElementById("moderationUnbanForm");
+    if (unbanForm) {
+      unbanForm.addEventListener("submit", function (event) {
+        event.preventDefault();
+        if (!state.guildId) {
+          toast(t("warn_select_guild"), { type: "warn" });
+          return;
+        }
+
+        const userId = document
+          .getElementById("moderationUnbanUserId")
+          .value.trim();
+        const reason = document
+          .getElementById("moderationUnbanReason")
+          .value.trim();
+        const button = document.getElementById("btnModerationUnban");
+        if (button) button.disabled = true;
+
+        apiPost("/mod/unban", {
+          guildId: state.guildId,
+          userId,
+          reason,
+        })
+          .then(function (response) {
+            if (!response || response.ok === false) {
+              throw new Error(response?.error || t("moderation_unban_error"));
+            }
+            toast(t("moderation_unban_success"), { type: "success" });
+            unbanForm.reset();
+          })
+          .catch(function (error) {
+            toast(
+              error?.apiMessage ||
+                error?.message ||
+                t("moderation_unban_error"),
+              {
+                type: "error",
+              },
+            );
+          })
+          .finally(function () {
+            if (button) button.disabled = false;
+          });
+      });
+    }
+
     const serverRangeEl = document.getElementById("modServerInsightsRange");
     if (serverRangeEl) {
       serverRangeEl.addEventListener("click", function (ev) {

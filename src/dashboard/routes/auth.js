@@ -597,6 +597,9 @@ function registerAuthRoutes(ctx) {
         role,
         permissions: perms,
         allowedGuildIds: allowed.slice(0, 200),
+        allowedGuilds: Array.isArray(allowedGuilds)
+          ? allowedGuilds.slice(0, 200)
+          : [],
         selectedGuildId: gid,
         botGuildInventory: Array.isArray(botGuildInventory)
           ? botGuildInventory

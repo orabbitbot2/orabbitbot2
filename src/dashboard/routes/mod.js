@@ -13,12 +13,16 @@ function registerModRoutes({
   getActorFromRequest,
   recordAudit,
   ModWarnSchema,
+  ModBanSchema,
+  ModUnbanSchema,
   ModMuteSchema,
   ModUnmuteSchema,
   parseDuration,
   formatDuration,
   config,
   dashboardWarn,
+  executeMemberAction,
+  executeUnbanAction,
   resolveGuildMember,
   mongoose,
   logger,
@@ -41,6 +45,21 @@ function registerModRoutes({
     windowMs: 60_000,
     max: 30,
     keyPrefix: "rl:mod:unmute:",
+  });
+  const rlKick = rateLimit({
+    windowMs: 60_000,
+    max: 10,
+    keyPrefix: "rl:mod:kick:",
+  });
+  const rlBan = rateLimit({
+    windowMs: 60_000,
+    max: 5,
+    keyPrefix: "rl:mod:ban:",
+  });
+  const rlUnban = rateLimit({
+    windowMs: 60_000,
+    max: 5,
+    keyPrefix: "rl:mod:unban:",
   });
   // Reset trust can be used in short bursts (bulk-cleanups). Keep protection, but avoid breaking UX.
   const rlReset = rateLimit({
@@ -114,6 +133,176 @@ function registerModRoutes({
     typeof requirePerm === "function"
       ? requirePerm({ anyOf: ["canViewLogs", "canActOnCases"] })
       : (req, res, next) => next();
+
+  function registerMemberActionRoute(action, limiter) {
+    const actionName = action.toLowerCase();
+    app.post(
+      `/api/mod/${actionName}`,
+      requireDashboardAuth,
+      canAct,
+      guardGuildBody,
+      limiter,
+      async (req, res) => {
+        const schema = action === "BAN" ? ModBanSchema : ModWarnSchema;
+        const parsed = schema.safeParse(req.body || {});
+        if (!parsed.success) {
+          return res
+            .status(400)
+            .json({ ok: false, error: `Invalid ${actionName} payload` });
+        }
+
+        const guildId = sanitizeId(parsed.data.guildId);
+        const userId = sanitizeId(parsed.data.userId);
+        const reason =
+          sanitizeText(parsed.data.reason, { maxLen: 1000, stripHtml: true }) ||
+          `Dashboard ${actionName}`;
+        let durationMs = null;
+        if (action === "BAN" && parsed.data.duration) {
+          durationMs = parseDuration(parsed.data.duration);
+          if (
+            !durationMs ||
+            durationMs < 60_000 ||
+            durationMs > 365 * 24 * 60 * 60 * 1000
+          ) {
+            return res.status(400).json({
+              ok: false,
+              error:
+                "Temporary ban duration must be between 1 minute and 365 days",
+            });
+          }
+        }
+        const actor = getActorFromRequest(req);
+        await recordAudit({
+          req,
+          action: `mod.${actionName}`,
+          guildId,
+          targetUserId: userId,
+          actor,
+          payload: { reason },
+        });
+
+        if (!guildId || !userId) {
+          return res
+            .status(400)
+            .json({ ok: false, error: "guildId and userId are required" });
+        }
+
+        const client = getClient();
+        if (!client) {
+          return res.status(500).json({ ok: false, error: "Client not ready" });
+        }
+
+        try {
+          const result = await executeMemberAction({
+            client,
+            guildId,
+            userId,
+            action,
+            reason,
+            durationMs,
+            executorId: req.dashboardUser && req.dashboardUser._id,
+            actor,
+            source: "dashboard",
+          });
+          const response = {
+            ok: true,
+            caseId: result?.infraction?.caseId || null,
+          };
+          if (result?.expiresAt) response.expiresAt = result.expiresAt;
+          return res.json(response);
+        } catch (error) {
+          const statusCode =
+            error?.code === "USER_NOT_FOUND_IN_GUILD"
+              ? 404
+              : error?.code === "BOT_MEMBER_NOT_AVAILABLE"
+                ? 500
+                : error?.code?.startsWith("FAILED_TO_")
+                  ? 500
+                  : 400;
+          return res.status(statusCode).json({
+            ok: false,
+            error: error?.message || `Failed to ${actionName} member`,
+            code: error?.code || "MODERATION_ACTION_FAILED",
+          });
+        }
+      },
+    );
+  }
+
+  registerMemberActionRoute("KICK", rlKick);
+  registerMemberActionRoute("BAN", rlBan);
+
+  app.post(
+    "/api/mod/unban",
+    requireDashboardAuth,
+    canAct,
+    guardGuildBody,
+    rlUnban,
+    async (req, res) => {
+      const parsed = ModUnbanSchema.safeParse(req.body || {});
+      if (!parsed.success) {
+        return res
+          .status(400)
+          .json({ ok: false, error: "Invalid unban payload" });
+      }
+
+      const guildId = sanitizeId(parsed.data.guildId);
+      const userId = sanitizeId(parsed.data.userId);
+      const reason =
+        sanitizeText(parsed.data.reason, { maxLen: 1000, stripHtml: true }) ||
+        "Dashboard unban";
+      const actor = getActorFromRequest(req);
+      await recordAudit({
+        req,
+        action: "mod.unban",
+        guildId,
+        targetUserId: userId,
+        actor,
+        payload: { reason },
+      });
+
+      if (!guildId || !/^\d{10,32}$/.test(userId)) {
+        return res
+          .status(400)
+          .json({ ok: false, error: "guildId and valid userId are required" });
+      }
+
+      const client = getClient();
+      if (!client) {
+        return res.status(500).json({ ok: false, error: "Client not ready" });
+      }
+
+      try {
+        const result = await executeUnbanAction({
+          client,
+          guildId,
+          userId,
+          reason,
+          executorId: req.dashboardUser && req.dashboardUser._id,
+          actor,
+          source: "dashboard",
+        });
+        return res.json({
+          ok: true,
+          caseId: result?.infraction?.caseId || null,
+        });
+      } catch (error) {
+        const statusCode =
+          error?.code === "USER_NOT_BANNED" || error?.code === "GUILD_NOT_FOUND"
+            ? 404
+            : error?.code === "BOT_MISSING_BAN_PERMISSION"
+              ? 403
+              : error?.code === "FAILED_TO_UNBAN"
+                ? 500
+                : 400;
+        return res.status(statusCode).json({
+          ok: false,
+          error: error?.message || "Failed to unban user",
+          code: error?.code || "UNBAN_FAILED",
+        });
+      }
+    },
+  );
 
   app.post(
     "/api/mod/warn",

@@ -62,6 +62,76 @@ module.exports = function buildSlashCommands(_prefix) {
         .setRequired(false),
     );
 
+  const kick = new SlashCommandBuilder()
+    .setName("kick")
+    .setDescription("Kick a member from this server")
+    .setDescriptionLocalizations({ "pt-BR": "Expulsar um membro do servidor" })
+    .addUserOption((opt) =>
+      opt
+        .setName("user")
+        .setDescription("Member to kick")
+        .setDescriptionLocalizations({ "pt-BR": "Membro a expulsar" })
+        .setRequired(true),
+    )
+    .addStringOption((opt) =>
+      opt
+        .setName("reason")
+        .setDescription("Reason")
+        .setDescriptionLocalizations({ "pt-BR": "Motivo" })
+        .setRequired(false),
+    );
+
+  const ban = new SlashCommandBuilder()
+    .setName("ban")
+    .setDescription("Ban a member from this server")
+    .setDescriptionLocalizations({ "pt-BR": "Banir um membro do servidor" })
+    .addUserOption((opt) =>
+      opt
+        .setName("user")
+        .setDescription("Member to ban")
+        .setDescriptionLocalizations({ "pt-BR": "Membro a banir" })
+        .setRequired(true),
+    )
+    .addStringOption((opt) =>
+      opt
+        .setName("duration")
+        .setDescription(
+          "Optional duration (e.g. 1h, 7d; empty means permanent)",
+        )
+        .setDescriptionLocalizations({
+          "pt-BR": "Duração opcional (ex.: 1h, 7d; vazio significa permanente)",
+        })
+        .setRequired(false),
+    )
+    .addStringOption((opt) =>
+      opt
+        .setName("reason")
+        .setDescription("Reason")
+        .setDescriptionLocalizations({ "pt-BR": "Motivo" })
+        .setRequired(false),
+    );
+
+  const unban = new SlashCommandBuilder()
+    .setName("unban")
+    .setDescription("Unban a user by Discord ID")
+    .setDescriptionLocalizations({ "pt-BR": "Desbanir por ID do Discord" })
+    .addStringOption((opt) =>
+      opt
+        .setName("user_id")
+        .setDescription("Discord user ID")
+        .setDescriptionLocalizations({ "pt-BR": "ID do utilizador no Discord" })
+        .setMinLength(10)
+        .setMaxLength(32)
+        .setRequired(true),
+    )
+    .addStringOption((opt) =>
+      opt
+        .setName("reason")
+        .setDescription("Reason")
+        .setDescriptionLocalizations({ "pt-BR": "Motivo" })
+        .setRequired(false),
+    );
+
   const unmute = new SlashCommandBuilder()
     .setName("unmute")
     .setDescription("Remove an active mute from a member")
@@ -206,6 +276,9 @@ module.exports = function buildSlashCommands(_prefix) {
   return [
     warn,
     mute,
+    kick,
+    ban,
+    unban,
     unmute,
     clear,
     userinfo,

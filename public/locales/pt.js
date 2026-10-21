@@ -292,6 +292,13 @@ window.OzarkLocales.pt = {
   management_title: "Gestão do bot",
   management_hint:
     "Manutenção e licenças Premium são geridas apenas pelo owner do bot.",
+  management_maintenance_group: "Manutenção global",
+  management_maintenance_group_hint:
+    "Controlos que afetam o comportamento do bot em todos os servidores.",
+  management_premium_group: "Licenças Premium",
+  management_premium_group_hint:
+    "Configuração comercial e acesso Premium por servidor.",
+  guild_connected_only: "Bot ligado · sem acesso de gestão",
   management_select_guild:
     "Seleciona um servidor para configurar a manutenção.",
   audit_action_trust_config_update: "Configuração Trust atualizada",
@@ -444,6 +451,7 @@ window.OzarkLocales.pt = {
   logs_search_aria: "Procurar registos",
   logs_export_csv: "Exportar CSV",
   logs_filter_ban: "Ban",
+  logs_filter_unban: "Unban",
   logs_filter_kick: "Kick",
   logs_filter_mute: "Mute",
   logs_filter_tickets: "Tickets (suporte)",
@@ -501,7 +509,13 @@ window.OzarkLocales.pt = {
     "Atividade e estado da moderação no servidor selecionado.",
   overview_inventory_title: "Servidores ligados",
   overview_inventory_hint:
-    "A instalação do bot não concede acesso de gestão ao servidor.",
+    "Escolhe Gerir nos servidores em que és owner ou administrador do Discord.",
+  overview_inventory_filters: "Filtrar servidores por acesso",
+  overview_inventory_filter_all: "Todos",
+  overview_inventory_filter_manageable: "Geríveis",
+  overview_inventory_filter_connected: "Só ligados",
+  overview_inventory_summary:
+    "{manageable} de {total} servidores disponíveis para gerir",
   overview_inventory_search_label: "Pesquisar servidores",
   overview_inventory_search_placeholder: "Nome do servidor",
   overview_inventory_empty: "Não foram encontrados servidores.",
@@ -609,6 +623,24 @@ window.OzarkLocales.pt = {
   users_actions_reset_history_confirm:
     "Tens a certeza que queres limpar o histórico de moderação deste utilizador?",
   users_actions_title: "Ações",
+  users_actions_kick: "Expulsar",
+  users_actions_kick_confirm:
+    "Confirma expulsar {user}? A ação ficará registada no histórico.",
+  users_actions_kick_ok: "Membro expulso e ação registada.",
+  users_actions_ban: "Banir",
+  users_actions_ban_duration_placeholder:
+    "Duração opcional (ex.: 1h, 7d); vazio = permanente",
+  users_actions_ban_confirm:
+    "Confirma banir {user}? Esta ação impede o regresso ao servidor.",
+  users_actions_tempban_confirm:
+    "Confirma banir {user} por {duration}? O ban será removido automaticamente.",
+  users_actions_ban_ok: "Membro banido e ação registada.",
+  moderation_unban_title: "Desbanir por ID",
+  moderation_unban_hint: "Remove um ban usando o ID Discord do utilizador.",
+  moderation_unban_user_id: "ID do utilizador",
+  moderation_unban_submit: "Desbanir",
+  moderation_unban_success: "Ban removido e ação registada.",
+  moderation_unban_error: "Não foi possível remover o ban.",
   users_actions_unmute: "Unmute",
   users_actions_warn: "Warn",
   users_actions_warn_ok: "Aviso aplicado.",
@@ -933,6 +965,21 @@ window.OzarkLocales.pt = {
   feature_auto_kick_name: "Auto-kick por infrações",
   feature_auto_kick_desc:
     "Expulsa automaticamente membros que atingem o número de infrações definido.",
+  feature_anti_spam_name: "Anti-spam",
+  feature_anti_spam_desc:
+    "Deteta mensagens repetidas e aplica avisos ou timeout segundo os limites deste servidor.",
+  features_antispam_max_messages: "Mensagens semelhantes",
+  features_antispam_interval: "Intervalo (segundos)",
+  features_antispam_mute_duration: "Timeout (minutos)",
+  features_antispam_soft_actions: "Avisar antes do timeout",
+  features_antispam_strikes: "Incidentes antes do timeout",
+  features_antispam_strike_window: "Janela de incidentes (segundos)",
+  features_antispam_cooldown: "Cooldown entre ações (segundos)",
+  features_antispam_min_length: "Comprimento mínimo da mensagem",
+  features_antispam_similarity: "Semelhança mínima",
+  features_antispam_ignore_attachments: "Ignorar mensagens só com anexos",
+  features_antispam_bypass_admins: "Ignorar Administradores",
+  features_antispam_send_message: "Publicar aviso no canal",
   feature_levels_name: "Níveis e XP",
   feature_levels_desc:
     "Dá XP por mensagem e permite consultar o ranking com /rank e /leaderboard.",
@@ -994,6 +1041,7 @@ window.OzarkLocales.pt = {
   features_presets: "Presets",
   features_preset_applied: "Preset preenchido. Revê e guarda a configuração.",
   features_configured: "Configurada",
+  features_inherited: "Herdado dos defaults globais",
   features_not_configured: "Não configurada",
   features_unsaved: "Alterações por guardar",
   features_setup_hint:

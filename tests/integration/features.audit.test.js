@@ -74,7 +74,69 @@ test("feature loading distinguishes saved features from normalized defaults", as
     const result = await response.json();
     assert.equal(result.configuredFeatures.welcome, true);
     assert.equal(result.configuredFeatures.messageLogs, false);
+    assert.equal(result.configuredFeatures.antiSpam, false);
     assert.equal(result.features.welcome.enabled, false);
+    assert.equal(
+      result.features.antiSpam.intervalSeconds,
+      Math.round(require("../../src/config/defaultConfig").antiSpam.interval / 1000),
+    );
+  } finally {
+    await stopApp(app.server);
+  }
+});
+
+test("antiSpam feature updates are clamped and saved per server", async () => {
+  let update;
+  const app = await startApp(registerFeaturesRoutes, {
+    requireDashboardAuth: passthrough,
+    requirePerm: () => passthrough,
+    requireGuildAccess: () => passthrough,
+    sanitizeId,
+    GuildConfig: {
+      findOneAndUpdate(filter, value) {
+        update = { filter, value };
+        return { lean: async () => ({}) };
+      },
+    },
+    getClient: () => null,
+  });
+
+  try {
+    const response = await fetch(app.baseUrl + "/api/features", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        guildId: "123456789012345678",
+        feature: "antiSpam",
+        value: {
+          enabled: true,
+          maxMessages: 1,
+          intervalSeconds: 500,
+          muteDurationMinutes: 0,
+          similarityThreshold: 2,
+          softActionsEnabled: true,
+        },
+      }),
+    });
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    assert.deepEqual(body.value, {
+      enabled: true,
+      intervalSeconds: 120,
+      maxMessages: 2,
+      muteDurationMinutes: 1,
+      actionCooldownSeconds: 120,
+      softActionsEnabled: true,
+      strikeWindowSeconds: 600,
+      strikesToMute: 2,
+      minLength: 6,
+      similarityThreshold: 1,
+      ignoreAttachments: true,
+      bypassAdmins: true,
+      sendMessage: true,
+    });
+    assert.equal(update.filter.guildId, "123456789012345678");
+    assert.deepEqual(update.value.$addToSet.featuresConfigured, "antiSpam");
   } finally {
     await stopApp(app.server);
   }

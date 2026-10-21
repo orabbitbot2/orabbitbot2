@@ -53,6 +53,7 @@
     guildsLoaded: false,
     currentTab: "overview",
     guilds: [],
+    guildInventoryFilter: "all",
     me: null,
     perms: {},
     trustDirty: false,
@@ -1543,6 +1544,8 @@
     var empty = document.getElementById("overviewGuildInventoryEmpty");
     var picker = document.getElementById("guildPicker");
     var search = document.getElementById("overviewGuildSearch");
+    var filters = document.getElementById("overviewGuildFilters");
+    var summary = document.getElementById("overviewGuildInventorySummary");
     if (!list || !empty) return;
     if (search && !search.dataset.bound) {
       search.dataset.bound = "1";
@@ -1551,17 +1554,53 @@
       });
     }
 
+    if (filters && !filters.dataset.bound) {
+      filters.dataset.bound = "1";
+      filters.addEventListener("click", function (event) {
+        var button = event.target.closest("[data-inventory-filter]");
+        if (!button || !filters.contains(button)) return;
+        state.guildInventoryFilter = button.dataset.inventoryFilter;
+        renderGlobalGuildInventory(search ? search.value : "");
+      });
+    }
+
+    var allGuilds = (state.guilds || []).filter(Boolean);
+    var manageableCount = allGuilds.filter(function (guild) {
+      return guild.manageable;
+    }).length;
+    if (summary) {
+      summary.textContent = t("overview_inventory_summary", {
+        manageable: manageableCount.toLocaleString(state.lang),
+        total: allGuilds.length.toLocaleString(state.lang),
+      });
+    }
+    if (filters) {
+      Array.prototype.forEach.call(
+        filters.querySelectorAll("[data-inventory-filter]"),
+        function (button) {
+          var active =
+            button.dataset.inventoryFilter === state.guildInventoryFilter;
+          button.classList.toggle("active", active);
+          button.setAttribute("aria-pressed", active ? "true" : "false");
+        },
+      );
+    }
+
     var normalizedQuery = String(query || "")
       .trim()
       .toLocaleLowerCase();
-    var guilds = (state.guilds || []).filter(function (guild) {
-      return (
+    var guilds = allGuilds.filter(function (guild) {
+      var matchesQuery =
         guild &&
         (!normalizedQuery ||
           String(guild.name || "")
             .toLocaleLowerCase()
-            .includes(normalizedQuery))
-      );
+            .includes(normalizedQuery));
+      var matchesFilter =
+        state.guildInventoryFilter === "all" ||
+        (state.guildInventoryFilter === "manageable" && guild.manageable) ||
+        (state.guildInventoryFilter === "connected" && !guild.manageable);
+      return matchesQuery && matchesFilter;
     });
     list.innerHTML = "";
     guilds.forEach(function (guild) {
@@ -1600,7 +1639,7 @@
       } else {
         var readOnly = document.createElement("span");
         readOnly.className = "badge badge-readonly";
-        readOnly.textContent = t("guild_read_only");
+        readOnly.textContent = t("guild_connected_only");
         row.appendChild(readOnly);
       }
       list.appendChild(row);

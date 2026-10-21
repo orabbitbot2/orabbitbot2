@@ -27,6 +27,7 @@
 
 - Comandos slash integrados com o dashboard:
   - `warn`, `mute`, `unmute`, `clear`, `userinfo`, `help` (e outros que venhas a adicionar).
+  - `/kick`, `/ban` e `/unban`; o ban aceita duração temporária e fica registado como caso.
 - Histórico de ações acessível na tab **Hub de moderação**:
   - Filtros por tipo (warn/mute/ban/tickets).
   - Limite configurável de registos por página.

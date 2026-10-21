@@ -697,6 +697,49 @@
                 />
               </label>
             </div>
+            <div class="overview-inventory-tools">
+              <div
+                class="overview-inventory-filters"
+                id="overviewGuildFilters"
+                role="group"
+                data-i18n-aria-label="overview_inventory_filters"
+                aria-label="Filtrar servidores"
+              >
+                <button
+                  type="button"
+                  class="overview-inventory-filter active"
+                  data-inventory-filter="all"
+                  aria-pressed="true"
+                  data-i18n="overview_inventory_filter_all"
+                >
+                  Todos
+                </button>
+                <button
+                  type="button"
+                  class="overview-inventory-filter"
+                  data-inventory-filter="manageable"
+                  aria-pressed="false"
+                  data-i18n="overview_inventory_filter_manageable"
+                >
+                  Geríveis
+                </button>
+                <button
+                  type="button"
+                  class="overview-inventory-filter"
+                  data-inventory-filter="connected"
+                  aria-pressed="false"
+                  data-i18n="overview_inventory_filter_connected"
+                >
+                  Só ligados
+                </button>
+              </div>
+              <p
+                class="hint"
+                id="overviewGuildInventorySummary"
+                role="status"
+                aria-live="polite"
+              ></p>
+            </div>
             <div
               class="list overview-guild-list"
               id="overviewGuildInventoryList"
@@ -843,6 +886,55 @@
               Consulta centralizada de avisos, mutes, bans e restantes ações de
               moderação.
             </p>
+
+            <div class="user-detail mini-panel">
+              <h3 data-i18n="moderation_unban_title">Desbanir por ID</h3>
+              <p class="hint" data-i18n="moderation_unban_hint">
+                Remove um ban usando o ID Discord do utilizador.
+              </p>
+              <form id="moderationUnbanForm" class="row gap">
+                <label class="col" for="moderationUnbanUserId">
+                  <span data-i18n="moderation_unban_user_id"
+                    >ID do utilizador</span
+                  >
+                  <input
+                    id="moderationUnbanUserId"
+                    class="input"
+                    type="text"
+                    inputmode="numeric"
+                    pattern="[0-9]{10,32}"
+                    minlength="10"
+                    maxlength="32"
+                    required
+                  />
+                </label>
+                <label class="col" for="moderationUnbanReason">
+                  <span data-i18n="users_actions_reason_placeholder"
+                    >Motivo (opcional)</span
+                  >
+                  <input
+                    id="moderationUnbanReason"
+                    class="input"
+                    type="text"
+                    maxlength="1000"
+                  />
+                </label>
+                <button
+                  class="btn xs"
+                  type="submit"
+                  id="btnModerationUnban"
+                  data-i18n="moderation_unban_submit"
+                >
+                  Desbanir
+                </button>
+                <span
+                  id="moderationUnbanStatus"
+                  class="hint"
+                  role="status"
+                  aria-live="polite"
+                ></span>
+              </form>
+            </div>
 
             <div
               class="user-layout moderation-panels"
@@ -1000,6 +1092,9 @@
                     Kick
                   </option>
                   <option value="ban" data-i18n="logs_filter_ban">Ban</option>
+                  <option value="unban" data-i18n="logs_filter_unban">
+                    Unban
+                  </option>
                   <option value="tickets" data-i18n="logs_filter_tickets">
                     Tickets
                   </option>
@@ -1184,6 +1279,15 @@
             <p class="hint" data-i18n="management_hint">
               Manutenção global e gestão de licenças Premium.
             </p>
+            <div class="management-section-head">
+              <h3 data-i18n="management_maintenance_group">
+                Manutenção global
+              </h3>
+              <p class="hint" data-i18n="management_maintenance_group_hint">
+                Controlos que afetam o comportamento do bot em todos os
+                servidores.
+              </p>
+            </div>
             <section
               class="card subcard management-maintenance"
               id="botMaintenancePanel"
@@ -1250,6 +1354,12 @@
                 ></span>
               </div>
             </section>
+            <div class="management-section-head">
+              <h3 data-i18n="management_premium_group">Licenças Premium</h3>
+              <p class="hint" data-i18n="management_premium_group_hint">
+                Configuração comercial e acesso Premium por servidor.
+              </p>
+            </div>
             <div class="premium-panel__history">
               <form
                 class="premium-settings-form hidden"

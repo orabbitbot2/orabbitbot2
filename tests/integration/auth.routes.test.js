@@ -135,7 +135,7 @@ test("bot owner cannot mint a server token without guild Administrator access", 
   }
 });
 
-test("bot owner can mint a server token for a guild they also administer", async () => {
+test("bot owner can scope to a server they own and keep guild access metadata", async () => {
   const previousOwnerIds = process.env.BOT_OWNER_IDS;
   process.env.BOT_OWNER_IDS = OWNER_ID;
   const app = await createAuthApp(
@@ -148,8 +148,8 @@ test("bot owner can mint a server token for a guild they also administer", async
       allowedGuilds: [
         {
           id: ADMIN_GUILD_ID,
-          owner: false,
-          permissions: "8",
+          owner: true,
+          permissions: "0",
           botPresent: true,
         },
       ],
@@ -167,6 +167,14 @@ test("bot owner can mint a server token for a guild they also administer", async
     assert.equal(payload.selectedGuildId, ADMIN_GUILD_ID);
     assert.equal(payload.guildScopeVersion, 2);
     assert.equal(payload.profile, "BOT_OWNER");
+    assert.deepEqual(payload.allowedGuilds, [
+      {
+        id: ADMIN_GUILD_ID,
+        owner: true,
+        permissions: "0",
+        botPresent: true,
+      },
+    ]);
   } finally {
     await stopApp(app.server);
     if (previousOwnerIds === undefined) delete process.env.BOT_OWNER_IDS;

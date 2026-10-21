@@ -725,13 +725,21 @@
           ? dbInfo.warnings
           : counts.WARN || 0;
       const muteCount = counts.MUTE || 0;
+      const kickCount = counts.KICK || 0;
+      const banCount = counts.BAN || 0;
 
-      if (warnCount || muteCount) {
+      if (warnCount || muteCount || kickCount || banCount) {
         if (warnCount) {
           html += `<div class="badge badge-warn">WARN: ${String(warnCount)}</div>`;
         }
         if (muteCount) {
           html += `<div class="badge badge-mute">MUTE: ${String(muteCount)}</div>`;
+        }
+        if (kickCount) {
+          html += `<div class="badge">KICK: ${String(kickCount)}</div>`;
+        }
+        if (banCount) {
+          html += `<div class="badge">BAN: ${String(banCount)}</div>`;
         }
       } else {
         html += `<div class="badge">${escapeHtml(t("users_history_none"))}</div>`;
@@ -747,11 +755,20 @@
       html += `<input type="text" class="input xs user-actions-reason" placeholder="${escapeHtml(
         t("users_actions_reason_placeholder"),
       )}" name="auto_field_6" id="auto_id_6">`;
+      html += `<input type="text" class="input xs user-actions-ban-duration" placeholder="${escapeHtml(
+        t("users_actions_ban_duration_placeholder"),
+      )}" inputmode="text" maxlength="32">`;
       html += "</div>";
 
       html += '<div class="badge-row user-actions-buttons">';
       html += `<button type="button" class="btn xs btn-warn" data-action="warn">${escapeHtml(
         t("users_actions_warn"),
+      )}</button>`;
+      html += `<button type="button" class="btn xs btn-kick" data-action="kick">${escapeHtml(
+        t("users_actions_kick"),
+      )}</button>`;
+      html += `<button type="button" class="btn xs btn-ban" data-action="ban">${escapeHtml(
+        t("users_actions_ban"),
       )}</button>`;
       html += `<button type="button" class="btn xs btn-unmute" data-action="unmute">${escapeHtml(
         t("users_actions_unmute"),
@@ -928,6 +945,80 @@
                       toast(t("users_history_error_generic"), {
                         type: "error",
                       });
+                    });
+                } else if (action === "kick" || action === "ban") {
+                  const confirmationKey =
+                    action === "kick"
+                      ? "users_actions_kick_confirm"
+                      : "users_actions_ban_confirm";
+                  if (
+                    !window.confirm(
+                      t(
+                        action === "ban" &&
+                          container
+                            .querySelector(".user-actions-ban-duration")
+                            ?.value.trim()
+                          ? "users_actions_tempban_confirm"
+                          : confirmationKey,
+                        {
+                          user: user.username || user.tag || user.id,
+                          duration: container
+                            .querySelector(".user-actions-ban-duration")
+                            ?.value.trim(),
+                        },
+                      ),
+                    )
+                  ) {
+                    return;
+                  }
+                  if (state._memberActionInFlight) return;
+                  state._memberActionInFlight = true;
+                  btn.disabled = true;
+                  const actionPayload = {
+                    guildId: state.guildId,
+                    userId: user.id,
+                    reason: reason,
+                  };
+                  if (action === "ban") {
+                    const duration = container
+                      .querySelector(".user-actions-ban-duration")
+                      ?.value.trim();
+                    if (duration) actionPayload.duration = duration;
+                  }
+                  apiPost("/mod/" + action, actionPayload)
+                    .then(function (res) {
+                      if (!res || res.ok === false) {
+                        toast(
+                          res && res.error
+                            ? String(res.error)
+                            : t("users_history_error_generic"),
+                          { type: "error" },
+                        );
+                        return;
+                      }
+                      toast(
+                        t(
+                          action === "kick"
+                            ? "users_actions_kick_ok"
+                            : "users_actions_ban_ok",
+                        ),
+                        { type: "success" },
+                      );
+                      detailEl.innerHTML =
+                        '<div class="empty">' +
+                        escapeHtml(t("users_detail_empty")) +
+                        "</div>";
+                      window.OzarkDashboard.loadUsers().catch(function () {});
+                    })
+                    .catch(function (err) {
+                      console.error(action + " error", err);
+                      toast(t("users_history_error_generic"), {
+                        type: "error",
+                      });
+                    })
+                    .finally(function () {
+                      state._memberActionInFlight = false;
+                      btn.disabled = false;
                     });
                 } else if (action === "reset") {
                   if (!window.confirm(t("users_actions_reset_confirm"))) return;

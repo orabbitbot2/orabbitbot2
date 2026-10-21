@@ -287,6 +287,13 @@ window.OzarkLocales.en = {
   management_title: "Bot management",
   management_hint:
     "Maintenance and Premium licenses are managed by the bot owner only.",
+  management_maintenance_group: "Global maintenance",
+  management_maintenance_group_hint:
+    "Controls that affect the bot across all servers.",
+  management_premium_group: "Premium licenses",
+  management_premium_group_hint:
+    "Commercial settings and Premium access by server.",
+  guild_connected_only: "Bot connected · no management access",
   management_select_guild: "Select a server to configure maintenance.",
   audit_action_trust_config_update: "Trust settings updated",
   audit_action_server_config_update: "Server configuration updated",
@@ -434,6 +441,7 @@ window.OzarkLocales.en = {
   logs_search_aria: "Search logs",
   logs_export_csv: "Export CSV",
   logs_filter_ban: "Ban",
+  logs_filter_unban: "Unban",
   logs_filter_kick: "Kick",
   logs_filter_mute: "Mute",
   logs_filter_tickets: "Tickets (support)",
@@ -488,7 +496,13 @@ window.OzarkLocales.en = {
     "Activity and moderation status for the selected server.",
   overview_inventory_title: "Installed servers",
   overview_inventory_hint:
-    "Installation does not grant access to manage a server.",
+    "Choose Manage on servers where you are the Discord owner or administrator.",
+  overview_inventory_filters: "Filter servers by access",
+  overview_inventory_filter_all: "All",
+  overview_inventory_filter_manageable: "Manageable",
+  overview_inventory_filter_connected: "Connected only",
+  overview_inventory_summary:
+    "{manageable} of {total} servers available to manage",
   overview_inventory_search_label: "Search servers",
   overview_inventory_search_placeholder: "Server name",
   overview_inventory_empty: "No servers match this search.",
@@ -595,6 +609,24 @@ window.OzarkLocales.en = {
   users_actions_reset_history_confirm:
     "Are you sure you want to clear this user's moderation history?",
   users_actions_title: "Actions",
+  users_actions_kick: "Kick",
+  users_actions_kick_confirm:
+    "Confirm kicking {user}? This action will be recorded in the case history.",
+  users_actions_kick_ok: "Member kicked and action recorded.",
+  users_actions_ban: "Ban",
+  users_actions_ban_duration_placeholder:
+    "Optional duration (e.g. 1h, 7d); empty = permanent",
+  users_actions_ban_confirm:
+    "Confirm banning {user}? This prevents them from rejoining the server.",
+  users_actions_tempban_confirm:
+    "Confirm banning {user} for {duration}? The ban will be removed automatically.",
+  users_actions_ban_ok: "Member banned and action recorded.",
+  moderation_unban_title: "Unban by ID",
+  moderation_unban_hint: "Remove a ban using the user's Discord ID.",
+  moderation_unban_user_id: "User ID",
+  moderation_unban_submit: "Unban",
+  moderation_unban_success: "Ban removed and action recorded.",
+  moderation_unban_error: "Could not remove the ban.",
   users_actions_unmute: "Unmute",
   users_actions_warn: "Warn",
   users_actions_warn_ok: "Warning applied.",
@@ -915,6 +947,21 @@ window.OzarkLocales.en = {
   feature_auto_kick_name: "Auto-kick on infractions",
   feature_auto_kick_desc:
     "Automatically kicks members that reach the configured infraction count.",
+  feature_anti_spam_name: "Anti-spam",
+  feature_anti_spam_desc:
+    "Detects repeated messages and applies warnings or timeouts using this server's thresholds.",
+  features_antispam_max_messages: "Similar messages",
+  features_antispam_interval: "Window (seconds)",
+  features_antispam_mute_duration: "Timeout (minutes)",
+  features_antispam_soft_actions: "Warn before timeout",
+  features_antispam_strikes: "Incidents before timeout",
+  features_antispam_strike_window: "Incident window (seconds)",
+  features_antispam_cooldown: "Cooldown between actions (seconds)",
+  features_antispam_min_length: "Minimum message length",
+  features_antispam_similarity: "Minimum similarity",
+  features_antispam_ignore_attachments: "Ignore attachment-only messages",
+  features_antispam_bypass_admins: "Ignore administrators",
+  features_antispam_send_message: "Post a channel notice",
   feature_levels_name: "Levels & XP",
   feature_levels_desc:
     "Grants XP per message and exposes ranking via /rank and /leaderboard.",
@@ -973,6 +1020,7 @@ window.OzarkLocales.en = {
   features_presets: "Presets",
   features_preset_applied: "Preset added to the form. Review and save it.",
   features_configured: "Configured",
+  features_inherited: "Inherited from global defaults",
   features_not_configured: "Not configured",
   features_unsaved: "Unsaved changes",
   features_setup_hint:

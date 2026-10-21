@@ -18,6 +18,36 @@ const {
   getEffectiveMuteDuration,
 } = require("../utils/trust");
 const { incrementAntiSpamActions } = require("./status");
+const { getFeature } = require("./featuresService");
+
+function resolveGuildAntiSpamConfig(baseConfig, featureConfig) {
+  if (!featureConfig) return baseConfig || {};
+  const base = baseConfig || {};
+  return {
+    ...base,
+    enabled: featureConfig.enabled === true,
+    interval: Number(featureConfig.intervalSeconds) * 1000,
+    maxMessages: Number(featureConfig.maxMessages),
+    muteDuration: Number(featureConfig.muteDurationMinutes) * 60_000,
+    actionCooldown: Number(featureConfig.actionCooldownSeconds) * 1000,
+    minLength: Number(featureConfig.minLength),
+    similarityThreshold: Number(featureConfig.similarityThreshold),
+    ignoreAttachments: featureConfig.ignoreAttachments === true,
+    bypassAdmins: featureConfig.bypassAdmins === true,
+    sendMessage: featureConfig.sendMessage !== false,
+    softActions: {
+      ...(base.softActions || {}),
+      enabled: featureConfig.softActionsEnabled === true,
+      strikeWindowMs: Number(featureConfig.strikeWindowSeconds) * 1000,
+      strikesToMute: Number(featureConfig.strikesToMute),
+    },
+  };
+}
+
+async function getGuildAntiSpamConfig(guildId) {
+  const featureConfig = await getFeature(guildId, "antiSpam").catch(() => null);
+  return resolveGuildAntiSpamConfig(config.antiSpam, featureConfig);
+}
 
 // In-memory tracking: guildId+userId -> state
 // state = { entries: [{ ts, norm }], lastActionAt, strikes, lastStrikeAt }
@@ -117,10 +147,11 @@ function getUserKey(message) {
 
 async function antiSpam(message, client) {
   try {
-    const antiCfg = config.antiSpam || {};
-    if (antiCfg.enabled === false) return;
     if (!message.guild) return;
     if (!message.author || message.author.bot) return;
+
+    const antiCfg = await getGuildAntiSpamConfig(message.guild.id);
+    if (antiCfg.enabled === false) return;
 
     const key = getUserKey(message);
     if (!key) return;
@@ -478,3 +509,4 @@ async function antiSpam(message, client) {
 }
 
 module.exports = antiSpam;
+module.exports.resolveGuildAntiSpamConfig = resolveGuildAntiSpamConfig;

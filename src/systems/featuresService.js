@@ -5,8 +5,37 @@
 
 const { getGuildConfig } = require("./guildConfigService");
 const messages = require("../config/messages");
+const defaultConfig = require("../config/defaultConfig");
+
+const globalAntiSpam = defaultConfig.antiSpam || {};
+const globalAntiSpamSoft = globalAntiSpam.softActions || {};
+const antiSpamFeatureDefaults = {
+  enabled: globalAntiSpam.enabled !== false,
+  intervalSeconds: Math.max(1, Math.round((globalAntiSpam.interval || 10000) / 1000)),
+  maxMessages: globalAntiSpam.maxMessages || 5,
+  muteDurationMinutes: Math.max(
+    1,
+    Math.round((globalAntiSpam.muteDuration || 300000) / 60000),
+  ),
+  actionCooldownSeconds: Math.max(
+    0,
+    Math.round((globalAntiSpam.actionCooldown || 120000) / 1000),
+  ),
+  softActionsEnabled: globalAntiSpamSoft.enabled !== false,
+  strikeWindowSeconds: Math.max(
+    1,
+    Math.round((globalAntiSpamSoft.strikeWindowMs || 600000) / 1000),
+  ),
+  strikesToMute: globalAntiSpamSoft.strikesToMute || 2,
+  minLength: globalAntiSpam.minLength ?? 6,
+  similarityThreshold: globalAntiSpam.similarityThreshold ?? 0.85,
+  ignoreAttachments: globalAntiSpam.ignoreAttachments !== false,
+  bypassAdmins: globalAntiSpam.bypassAdmins !== false,
+  sendMessage: globalAntiSpam.sendMessage !== false,
+};
 
 const FEATURE_DEFAULTS = {
+  antiSpam: antiSpamFeatureDefaults,
   messageLogs: { enabled: false, channelId: null, ignoreBots: true },
   reactionRoles: {
     enabled: false,

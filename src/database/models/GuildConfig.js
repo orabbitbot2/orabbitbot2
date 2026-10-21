@@ -93,6 +93,9 @@ const guildConfigSchema = new Schema(
     // Funcionalidades opcionais (tab "Funcionalidades" da dashboard).
     // Cada bloco tem um interruptor `enabled` independente.
     features: {
+      // Optional anti-spam overrides; defaults are resolved from global config.
+      antiSpam: { type: Schema.Types.Mixed, default: null },
+
       // Logs de mensagens editadas/apagadas
       messageLogs: {
         enabled: { type: Boolean, default: false },

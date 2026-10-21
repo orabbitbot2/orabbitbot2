@@ -47,6 +47,7 @@ const { startTwitch } = require("./systems/twitch");
 const { startServerStats } = require("./systems/serverStats");
 const { startPresenceTracker } = require("./systems/presenceTracker");
 const { startVerificationSweep } = require("./systems/verification");
+const { startTemporaryBanScheduler } = require("./systems/temporaryBans");
 
 // Ensure critical MongoDB indexes (autoIndex is disabled in production).
 async function ensureMongoIndexes() {
@@ -73,6 +74,7 @@ async function ensureMongoIndexes() {
     const User = safeRequire("./database/models/User");
     const UserActivity = safeRequire("./database/models/UserActivity");
     const PresenceSession = safeRequire("./database/models/PresenceSession");
+    const TemporaryBan = safeRequire("./database/models/TemporaryBan");
     const GameNewsFeed = safeRequire("./database/models/GameNewsFeed");
     const GameNews = safeRequire("./database/models/GameNews");
     const GiveawayPost = safeRequire("./database/models/GiveawayPost");
@@ -93,6 +95,7 @@ async function ensureMongoIndexes() {
       User,
       UserActivity,
       PresenceSession,
+      TemporaryBan,
       GameNewsFeed,
       GameNews,
       GiveawayPost,
@@ -241,6 +244,13 @@ async function handleClientReady() {
       startMaintenance(config);
     } catch (err) {
       console.error("[Startup] Failed to start maintenance scheduler:", err);
+    }
+
+    try {
+      startTemporaryBanScheduler(client);
+      console.log("⏱️ Temporary ban scheduler started.");
+    } catch (err) {
+      console.error("[Startup] Failed to start temporary ban scheduler:", err);
     }
 
     // Start Game News system (delegates "enabled" check to the module itself)

@@ -49,7 +49,8 @@ Não é um compromisso rígido, mas um guia de prioridades.
 ## 3. Sistema de confiança (Trust)
 
 - Refinar regras de pontuação:
-  - Penalizações diferentes para Warn/Mute/Ban. ⏸️ – adiado: o bot **não implementa ban/kick** (ver `src/dashboard/routes/mod.js`), pelo que não há penalização de BAN para aplicar. WARN e MUTE já têm penalizações distintas.
+  - Penalizações diferentes para Warn/Mute/Ban. ⏸️ – WARN e MUTE têm penalizações distintas; KICK/BAN ficam registados como casos, mas não alteram Trust. Definir uma política antes de aplicar penalizações a ações que removem o membro do servidor.
+  - Banimentos temporários e unban: ✅ – `/ban` e a dashboard aceitam duração opcional (1 minuto–365 dias); registo persistente com marcador único, scheduler após arranque Discord e retry quando Discord/API ou guild não estão disponíveis. `/unban` cancela o agendamento e cria um caso `UNBAN`.
   - Bónus gradual por tempo sem infrações. ✅ – `applyTrustRegen` em `src/systems/warningsService.js` (ganho diário limitado por `regenMaxDays`).
 - Expor mais detalhes na dashboard:
   - Histórico visual da evolução do Trust de um utilizador. ✅ – campo `trustHistory` no modelo `User` (máx. 30 entradas, `{ at, delta, trust, reason }`), alimentado por `warningsService` (warn/mute/regen/unwarn/unmute/reset); exposto em `GET /api/user` e renderizado no painel de detalhe (`#userDetailPanel`).

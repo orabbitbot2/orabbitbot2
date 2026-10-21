@@ -32,6 +32,7 @@ function hasLegacyFeatureConfig(name, value) {
 }
 
 const REQUIRED_FEATURE_FIELDS = {
+  antiSpam: [],
   messageLogs: ["channelId"],
   reactionRoles: ["channelId", "messageId", "entries"],
   starboard: ["channelId"],
@@ -298,6 +299,65 @@ function cleanFeatureValue(name, raw, sanitizeId) {
   };
 
   switch (name) {
+    case "antiSpam": {
+      const defaults = FEATURE_DEFAULTS.antiSpam;
+      const rawSimilarity = Number(src.similarityThreshold);
+      return {
+        enabled: toBool(src.enabled),
+        intervalSeconds: toInt(
+          src.intervalSeconds,
+          defaults.intervalSeconds,
+          1,
+          120,
+        ),
+        maxMessages: toInt(src.maxMessages, defaults.maxMessages, 2, 30),
+        muteDurationMinutes: toInt(
+          src.muteDurationMinutes,
+          defaults.muteDurationMinutes,
+          1,
+          1440,
+        ),
+        actionCooldownSeconds: toInt(
+          src.actionCooldownSeconds,
+          defaults.actionCooldownSeconds,
+          0,
+          3600,
+        ),
+        softActionsEnabled:
+          src.softActionsEnabled === undefined
+            ? defaults.softActionsEnabled
+            : toBool(src.softActionsEnabled),
+        strikeWindowSeconds: toInt(
+          src.strikeWindowSeconds,
+          defaults.strikeWindowSeconds,
+          1,
+          3600,
+        ),
+        strikesToMute: toInt(
+          src.strikesToMute,
+          defaults.strikesToMute,
+          1,
+          10,
+        ),
+        minLength: toInt(src.minLength, defaults.minLength, 0, 100),
+        similarityThreshold: Number.isFinite(rawSimilarity)
+          ? Math.min(1, Math.max(0.5, rawSimilarity))
+          : defaults.similarityThreshold,
+        ignoreAttachments:
+          src.ignoreAttachments === undefined
+            ? defaults.ignoreAttachments
+            : toBool(src.ignoreAttachments),
+        bypassAdmins:
+          src.bypassAdmins === undefined
+            ? defaults.bypassAdmins
+            : toBool(src.bypassAdmins),
+        sendMessage:
+          src.sendMessage === undefined
+            ? defaults.sendMessage
+            : toBool(src.sendMessage),
+      };
+    }
+
     case "messageLogs":
       return {
         enabled: toBool(src.enabled),
